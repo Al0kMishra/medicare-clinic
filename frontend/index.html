@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MediCare — Clinic Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fraunces:opsz,wght@9..144,700;9..144,900&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --cream:#FDF6EE; --white:#FFFFFF; --sage:#6B9E8A; --sage-d:#4D7A68; --sage-l:#E8F4F0;
+    --amber:#E9A84C; --amber-d:#D4943A;
+    --ink:#2A1F18; --ink2:#3D2B1F; --muted:#9C8B7E; --border:#EDE4D8; --border2:#D4C8BC;
+    --warn-bg:#FEF3DC; --warn-fg:#A06A10;
+    --danger-bg:#FDECEA; --danger-fg:#B85248; --danger-border:#EAB4B0;
+    --font:'Nunito',sans-serif; --serif:'Fraunces',serif;
+    --radius:14px; --radius-lg:20px;
+    --shadow:0 2px 12px rgba(61,43,31,.06); --shadow-lg:0 8px 32px rgba(61,43,31,.13);
+  }
+  html,body{height:100%;}
+  body{font-family:var(--font);background:var(--cream);color:var(--ink2);display:flex;min-height:100vh;font-size:14px;line-height:1.5;}
+
+  /* Sidebar */
+  #sidebar{width:220px;min-height:100vh;background:var(--white);border-right:1.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .25s ease;overflow:hidden;position:sticky;top:0;height:100vh;}
+  #sidebar.collapsed{width:66px;}
+  .sb-head{padding:18px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;min-height:72px;flex-shrink:0;}
+  .sb-logo{width:40px;height:40px;background:linear-gradient(135deg,#7BB8A6,#4D7A68);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 4px 12px rgba(75,122,104,.3);}
+  .sb-name{font-family:var(--serif);font-weight:900;font-size:19px;color:var(--ink);white-space:nowrap;}
+  .sb-nav{padding:10px 8px;flex:1;}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;margin-bottom:4px;cursor:pointer;color:var(--muted);font-weight:700;font-size:14px;white-space:nowrap;transition:all .15s;user-select:none;}
+  .nav-item:hover{background:#F5EFE8;color:var(--ink2);}
+  .nav-item.active{background:var(--sage-l);color:var(--sage-d);}
+  .nav-icon{font-size:18px;flex-shrink:0;width:22px;text-align:center;}
+  .sb-footer{padding:12px 8px;border-top:1px solid var(--border);flex-shrink:0;}
+  .sb-user{display:flex;align-items:center;gap:10px;padding:8px 12px;white-space:nowrap;}
+  .avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0;}
+
+  /* Main */
+  #main{flex:1;display:flex;flex-direction:column;min-width:0;}
+  #topbar{padding:16px 26px;background:var(--white);border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-shrink:0;position:sticky;top:0;z-index:10;}
+  .page-title{font-family:var(--serif);font-size:22px;font-weight:900;color:var(--ink);}
+  .page-sub{font-size:12px;color:var(--muted);margin-top:1px;}
+  #content{padding:24px 26px;flex:1;}
+
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:11px;font-weight:800;font-size:13px;font-family:var(--font);cursor:pointer;border:none;transition:all .15s;line-height:1;}
+  .btn-primary{background:var(--sage);color:#fff;}
+  .btn-primary:hover{background:var(--sage-d);transform:translateY(-1px);box-shadow:0 4px 14px rgba(77,122,104,.3);}
+  .btn-secondary{background:var(--cream);color:var(--sage-d);border:1.5px solid var(--sage);}
+  .btn-secondary:hover{background:var(--sage-l);}
+  .btn-amber{background:var(--amber);color:#fff;}
+  .btn-amber:hover{background:var(--amber-d);transform:translateY(-1px);}
+  .btn-danger{background:var(--danger-bg);color:var(--danger-fg);border:1.5px solid var(--danger-border);}
+  .btn-danger:hover{background:#FAD5D2;}
+  .btn-sm{padding:5px 11px;font-size:12px;border-radius:9px;}
+  .btn-icon{background:none;border:none;cursor:pointer;padding:6px 7px;border-radius:9px;display:inline-flex;align-items:center;color:var(--muted);transition:all .15s;font-size:15px;}
+  .btn-icon:hover{background:#F5EFE8;color:var(--ink2);}
+  .menu-btn{background:none;border:none;cursor:pointer;font-size:20px;padding:4px;color:var(--muted);}
+
+  /* Cards */
+  .card{background:var(--white);border-radius:var(--radius-lg);border:1.5px solid var(--border);padding:22px;box-shadow:var(--shadow);}
+  .card-title{font-family:var(--serif);font-weight:700;font-size:16px;margin-bottom:14px;color:var(--ink);}
+
+  /* Stats */
+  .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:22px;}
+  @media(min-width:900px){.stats-grid{grid-template-columns:repeat(4,1fr);}}
+  .stat-card{border-radius:var(--radius-lg);padding:20px;border:1.5px solid;}
+  .stat-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;opacity:.65;margin-bottom:4px;}
+  .stat-value{font-family:var(--serif);font-size:38px;font-weight:900;line-height:1;margin:4px 0 2px;}
+  .stat-sub{font-size:12px;opacity:.65;font-weight:700;}
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;}
+  @media(max-width:760px){.dash-grid{grid-template-columns:1fr;}}
+
+  /* Rows */
+  .today-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+  .today-row:last-child{border-bottom:none;}
+  .time-badge{background:var(--sage-l);color:#3A7060;border-radius:10px;padding:7px 10px;text-align:center;flex-shrink:0;min-width:64px;}
+  .time-val{font-weight:900;font-size:13px;}
+  .time-ampm{font-size:10px;font-weight:700;opacity:.65;}
+
+  /* Badges */
+  .bdg{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;white-space:nowrap;}
+  .bdg-scheduled{background:var(--warn-bg);color:var(--warn-fg);}
+  .bdg-completed{background:var(--sage-l);color:#3A7060;}
+  .bdg-cancelled{background:var(--danger-bg);color:var(--danger-fg);}
+
+  /* Filter tabs */
+  .filter-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .ftab{padding:7px 15px;border-radius:20px;font-size:13px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--muted);font-family:var(--font);transition:all .15s;}
+  .ftab:hover{border-color:var(--sage);color:var(--sage-d);}
+  .ftab.active{background:var(--sage);color:#fff;border-color:var(--sage);}
+
+  /* Patient rows */
+  .patient-row{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:10px;transition:all .15s;background:var(--white);}
+  .patient-row:hover{box-shadow:0 4px 18px rgba(61,43,31,.09);border-color:var(--border2);}
+  .patient-info{flex:1;min-width:0;}
+  .patient-name{font-weight:800;font-size:15px;color:var(--ink);}
+  .patient-meta{font-size:12px;color:var(--muted);margin-top:3px;}
+  .patient-tags{margin-top:7px;display:flex;gap:6px;flex-wrap:wrap;}
+  .tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:800;}
+  .tag-condition{background:var(--warn-bg);color:var(--warn-fg);}
+  .tag-allergy{background:var(--danger-bg);color:var(--danger-fg);}
+  .patient-actions{text-align:right;flex-shrink:0;}
+  .patient-last{font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700;line-height:1.5;}
+
+  /* Appointment cards */
+  .appt-card{padding:16px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--white);margin-bottom:10px;display:flex;gap:14px;align-items:flex-start;transition:all .15s;}
+  .appt-card:hover{box-shadow:0 4px 18px rgba(61,43,31,.09);border-color:var(--border2);}
+  .appt-time{background:var(--sage-l);color:#3A7060;border-radius:12px;padding:8px 10px;text-align:center;flex-shrink:0;min-width:70px;}
+  .appt-time-hm{font-weight:900;font-size:14px;}
+  .appt-time-ap{font-size:10px;font-weight:700;opacity:.65;}
+  .appt-time-dt{font-size:10px;font-weight:800;margin-top:4px;opacity:.6;}
+  .appt-body{flex:1;min-width:0;}
+  .appt-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
+  .appt-name{font-weight:800;font-size:15px;}
+  .appt-doctor{font-size:13px;color:#5A7068;font-weight:700;}
+  .appt-notes{font-size:12px;color:var(--muted);margin-top:5px;}
+  .appt-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
+
+  /* Forms */
+  .form-group{margin-bottom:14px;}
+  .form-label{display:block;margin-bottom:5px;font-weight:800;color:var(--ink2);font-size:12px;}
+  .form-input{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:11px;font-size:14px;font-family:var(--font);background:#FDFAF6;color:var(--ink2);outline:none;transition:border-color .15s;}
+  .form-input:focus{border-color:var(--sage);background:var(--white);}
+  textarea.form-input{resize:vertical;min-height:80px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .span-2{grid-column:span 2;}
+  .search-wrap{position:relative;flex:1;}
+  .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;color:var(--muted);}
+  .search-input{padding-left:38px !important;}
+
+  /* Modal */
+  .modal-overlay{position:fixed;inset:0;background:rgba(42,31,24,.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;backdrop-filter:blur(3px);}
+  .modal-box{background:var(--white);border-radius:22px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(42,31,24,.22);animation:fadeUp .2s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .modal-title{font-family:var(--serif);font-size:21px;font-weight:900;color:var(--ink);}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;}
+  .modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+
+  /* Portal */
+  .portal-wrap{max-width:580px;margin:0 auto;}
+  .portal-banner{background:linear-gradient(135deg,#6B9E8A,#3D7060);border-radius:20px;padding:26px 28px;margin-bottom:24px;color:#fff;}
+  .steps-row{display:flex;align-items:center;justify-content:center;margin-bottom:8px;}
+  .step-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;transition:all .2s;}
+  .step-dot.done{background:var(--sage);color:#fff;}
+  .step-dot.current{background:var(--amber);color:#fff;box-shadow:0 4px 12px rgba(233,168,76,.4);}
+  .step-dot.future{background:var(--border);color:var(--muted);}
+  .step-line{flex:1;height:2px;max-width:60px;background:var(--border);transition:background .3s;}
+  .step-line.done{background:var(--sage);}
+  .step-labels{display:flex;justify-content:space-between;font-size:11px;font-weight:800;color:var(--muted);margin-bottom:24px;padding:0 2px;}
+  .step-labels span.active-lbl{color:var(--sage-d);}
+  .service-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+  .service-card{border:2px solid var(--border);border-radius:16px;padding:20px 14px;cursor:pointer;transition:all .15s;background:var(--white);text-align:center;}
+  .service-card:hover{border-color:var(--sage);background:#F2FAF7;transform:translateY(-2px);}
+  .service-card.selected{border-color:var(--sage);background:var(--sage-l);}
+  .service-icon{font-size:28px;margin-bottom:8px;}
+  .service-name{font-weight:800;font-size:14px;color:var(--ink);}
+  .service-desc{font-size:12px;color:var(--muted);margin-top:3px;}
+  .time-slots{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;margin-bottom:20px;}
+  .tslot{padding:8px 14px;border-radius:9px;border:1.5px solid var(--border);cursor:pointer;font-size:13px;font-weight:800;font-family:var(--font);transition:all .15s;background:var(--white);color:var(--ink2);}
+  .tslot:hover{border-color:var(--sage);background:#F2FAF7;}
+  .tslot.selected{background:var(--sage);color:#fff;border-color:var(--sage);}
+  .booking-summary{background:#F5EFE8;border-radius:var(--radius);padding:16px 18px;margin:14px 0 18px;}
+  .summary-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;}
+  .summary-row:last-child{margin-bottom:0;}
+  .summary-key{color:var(--muted);font-weight:700;}
+  .summary-val{font-weight:800;color:var(--ink);}
+  .success-screen{text-align:center;padding:44px 24px;}
+
+  /* Toast */
+  .toast{position:fixed;bottom:24px;right:24px;padding:13px 20px;border-radius:var(--radius);font-weight:800;font-size:14px;z-index:200;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-lg);animation:fadeUp .3s ease;}
+  .toast-success{background:#4D7A68;color:#fff;}
+  .toast-error{background:#B85248;color:#fff;}
+  .toast-info{background:var(--ink);color:#fff;}
+
+  /* Loading spinner */
+  .spinner{display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--sage);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-wrap{display:flex;align-items:center;justify-content:center;padding:60px;gap:14px;color:var(--muted);font-weight:700;}
+
+  /* Empty */
+  .empty{text-align:center;padding:52px 24px;color:var(--muted);}
+  .empty-icon{font-size:44px;margin-bottom:12px;}
+  .empty-text{font-weight:700;font-size:15px;}
+
+  /* Error banner */
+  .error-banner{background:var(--danger-bg);border:1.5px solid var(--danger-border);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;color:var(--danger-fg);font-weight:700;display:flex;align-items:center;gap:10px;}
+
+  /* Misc */
+  .link{cursor:pointer;color:var(--sage-d);font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:2px;}
+  .link:hover{text-decoration:underline;}
+  .flex-between{display:flex;align-items:center;justify-content:space-between;}
+  .hidden{display:none !important;}
+  .row-actions{display:flex;gap:4px;}
+  .quick-actions{display:flex;gap:12px;flex-wrap:wrap;}
+  .disabled{opacity:.4;pointer-events:none;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sb-head">
+    <div class="sb-logo">🏥</div>
+    <span class="sb-name">MediCare</span>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label"> Dashboard</span></div>
+    <div class="nav-item" data-page="patients"><span class="nav-icon">👥</span><span class="nav-label"> Patients</span></div>
+    <div class="nav-item" data-page="appointments"><span class="nav-icon">📅</span><span class="nav-label"> Appointments</span></div>
+    <div class="nav-item" data-page="portal"><span class="nav-icon">🌐</span><span class="nav-label"> Patient Portal</span></div>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="avatar" style="background:#6B9E8A;">AD</div>
+      <div id="user-label">
+        <div style="font-weight:800;font-size:13px;color:var(--ink);">Dr. Admin</div>
+        <div style="font-size:11px;color:var(--muted);">Clinic Manager</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="menu-btn" id="menu-toggle">☰</button>
+      <div>
+        <div class="page-title" id="page-title">Good Morning ☀️</div>
+        <div class="page-sub" id="page-sub">Loading…</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;"><div id="topbar-action"></div><button onclick="adminLogout()" style="background:none;border:1.5px solid var(--border);border-radius:10px;padding:7px 14px;font-family:var(--font);font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;">⬅ Logout</button></div>
+  </div>
+  <div id="content"><div class="loading-wrap"><div class="spinner"></div> Connecting to server…</div></div>
+</div>
+
+<!-- PATIENT MODAL -->
+<div class="modal-overlay hidden" id="patient-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title" id="pt-modal-title">✨ New Patient</span>
+      <button class="btn-icon" onclick="closeModal('patient-modal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group span-2">
+        <label class="form-label">Full Name *</label>
+        <input class="form-input" id="pt-name" placeholder="Patient's full name"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date of Birth</label>
+        <input type="date" class="form-input" id="pt-dob"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Gender</label>
+        <select class="form-input" id="pt-gender">
+          <option>Female</option><option>Male</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone *</label>
+        <input class="form-input" id="pt-phone" placeholder="+91 ..."/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="pt-email" placeholder="Optional"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Blood Group</label>
+        <select class="form-input" id="pt-blood">
+          <option>O+</option><option>O-</option><option>A+</option><option>A-</option>
+          <option>B+</option><option>B-</option><option>AB+</option><option>AB-</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Primary Condition</label>
+        <input class="form-input" id="pt-condition" placeholder="e.g. Hypertension"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Allergies</label>
+        <input class="form-input" id="pt-allergies" placeholder="None"/>
+      </div>
+      <div class="form-group span-2">
+        <label class="form-label">Medical History</label>
+        <textarea class="form-input" id="pt-history" placeholder="Diagnoses, medications, notes…"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('patient-modal')">Cancel</button>
+      <button class="btn btn-primary" id="pt-save-btn" onclick="savePatient()">✓ <span id="pt-save-lbl">Add Patient</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- APPOINTMENT MODAL -->
+<div class="modal-overlay hidden" id="appt-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-title">📅 Schedule Appointment</span>
+      <button class="btn-icon" onclick="closeModal('appt-modal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group span-2">
+        <label class="form-label">Patient *</label>
+        <select class="form-input" id="ap-patient">
+          <option value="">— Select Patient —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Doctor</label>
+        <select class="form-input" id="ap-doctor">
+          <option>Dr. Ayesha Khan</option><option>Dr. Rajiv Menon</option><option>Dr. Suresh Iyer</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-input" id="ap-type">
+          <option>General Checkup</option><option>Follow-up</option><option>Consultation</option>
+          <option>Lab Review</option><option>Physiotherapy</option><option>Emergency</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date *</label>
+        <input type="date" class="form-input" id="ap-date"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Time *</label>
+        <select class="form-input" id="ap-time">
+          <option value="">— Select Time —</option>
+          <option>09:00 AM</option><option>09:30 AM</option><option>10:00 AM</option>
+          <option>10:30 AM</option><option>11:00 AM</option><option>11:30 AM</option>
+          <option>02:00 PM</option><option>02:30 PM</option><option>03:00 PM</option>
+          <option>03:30 PM</option><option>04:00 PM</option>
+        </select>
+      </div>
+      <div class="form-group span-2">
+        <label class="form-label">Notes</label>
+        <textarea class="form-input" id="ap-notes" placeholder="Reason for visit, instructions…"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('appt-modal')">Cancel</button>
+      <button class="btn btn-primary" id="ap-save-btn" onclick="saveAppointment()">✓ Schedule</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="modal-overlay hidden" id="delete-modal">
+  <div class="modal-box" style="max-width:380px;text-align:center;">
+    <div style="font-size:52px;margin-bottom:14px;">🗑️</div>
+    <div style="font-family:var(--serif);font-size:22px;font-weight:900;margin-bottom:10px;">Remove Patient?</div>
+    <div style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:22px;">
+      This will permanently delete <strong id="del-name"></strong>'s record and all their appointments.
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn btn-secondary" onclick="closeModal('delete-modal')">Keep Patient</button>
+      <button class="btn btn-danger" id="del-confirm-btn" onclick="confirmDelete()">🗑 Remove</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast hidden" id="toast"></div>
+
+<script>
+// ══ CONFIG ════════════════════════════════════════════════
+// ── Auth Guard ──────────────────────────────────────────
+if (sessionStorage.getItem('mc_role') !== 'admin') {
+  window.location.href = 'login.html';
+}
+function adminLogout() {
+  sessionStorage.clear();
+  window.location.href = 'login.html';
+}
+
+const BASE_URL = 'http://localhost:8000';
+const TODAY    = '2026-03-20';
+const AVATAR_COLORS = ['#6B9E8A','#E9A84C','#E07B6A','#7B9BD4','#A67BCE','#5BAAB8','#C47A5A','#7AB878'];
+
+// ══ STATE ════════════════════════════════════════════════
+let patients     = [];
+let appointments = [];
+let stats        = {};
+let currentPage  = 'dashboard';
+let apptFilter   = 'all';
+let editingPatientId = null;
+let deleteTargetId   = null;
+let portalStep   = 1;
+let portalData   = {};
+
+// ══ API HELPER ════════════════════════════════════════════
+async function api(path, options = {}) {
+  const res = await fetch(BASE_URL + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  });
+  if (res.status === 204) return null;
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
+  return data;
+}
+
+// ══ DATA REFRESH ══════════════════════════════════════════
+async function refreshData() {
+  try {
+    [patients, appointments, stats] = await Promise.all([
+      api('/patients'),
+      api('/appointments'),
+      api('/stats'),
+    ]);
+  } catch (err) {
+    showToast('Cannot reach server. Is it running?', 'error');
+    throw err;
+  }
+}
+
+// ══ HELPERS ══════════════════════════════════════════════
+function age(dob) { return dob ? Math.floor((new Date() - new Date(dob + ' 00:00:00')) / 31557600000) : '—'; }
+function fmtDate(d) { return d ? new Date(d + ' 00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—'; }
+function initials(name) { return name.split(' ').map(x => x[0]).join('').toUpperCase().slice(0, 2); }
+function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function avatarColor(i) { return AVATAR_COLORS[i % AVATAR_COLORS.length]; }
+
+// ══ TOAST ════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.className = 'toast toast-' + type;
+  t.innerHTML = (type === 'success' ? '✓ ' : type === 'error' ? '✕ ' : 'ℹ ') + esc(msg);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add('hidden'), 3500);
+}
+
+function openModal(id)  { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+// ══ NAVIGATION ════════════════════════════════════════════
+async function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.page === page)
+  );
+
+  const c = document.getElementById('content');
+  c.innerHTML = `<div class="loading-wrap"><div class="spinner"></div> Loading…</div>`;
+
+  try {
+    await refreshData();
+  } catch (e) {
+    c.innerHTML = `<div class="error-banner">⚠️ Could not connect to the server at <strong>${BASE_URL}</strong>. Make sure the backend is running.</div>`;
+    return;
+  }
+
+  const todayCount = appointments.filter(a => a.date === TODAY).length;
+  const meta = {
+    dashboard:    { title: 'Good Morning ☀️',  sub: `Friday, March 20 · ${todayCount} appointments today` },
+    patients:     { title: 'Patient Records',   sub: `${patients.length} patients registered` },
+    appointments: { title: 'Appointments',      sub: 'Manage your clinic schedule' },
+    portal:       { title: 'Patient Portal',    sub: 'Self-service appointment booking' },
+  };
+  const m = meta[page];
+  document.getElementById('page-title').textContent = m.title;
+  document.getElementById('page-sub').textContent   = m.sub;
+
+  const action = document.getElementById('topbar-action');
+  action.innerHTML = page === 'patients'
+    ? `<button class="btn btn-primary" onclick="openAddPatient()">+ Add Patient</button>`
+    : page === 'appointments'
+    ? `<button class="btn btn-primary" onclick="openAddAppt()">+ New Appointment</button>`
+    : '';
+
+  if (page === 'dashboard')    c.innerHTML = renderDashboard();
+  if (page === 'patients')     c.innerHTML = renderPatients();
+  if (page === 'appointments') c.innerHTML = renderAppointments();
+  if (page === 'portal')       { c.innerHTML = renderPortalWrapper(); renderPortalStep(); }
+}
+
+document.querySelectorAll('.nav-item').forEach(el =>
+  el.addEventListener('click', () => navigate(el.dataset.page))
+);
+
+document.getElementById('menu-toggle').addEventListener('click', () => {
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('collapsed');
+  const col = sb.classList.contains('collapsed');
+  document.getElementById('user-label').classList.toggle('hidden', col);
+  document.querySelectorAll('.nav-label').forEach(l => l.classList.toggle('hidden', col));
+  document.querySelector('.sb-name').classList.toggle('hidden', col);
+});
+
+// ══ DASHBOARD ════════════════════════════════════════════
+function renderDashboard() {
+  const todayAppts = appointments.filter(a => a.date === TODAY)
+    .sort((a, b) => a.time.localeCompare(b.time));
+  const recentPts = [...patients]
+    .sort((a, b) => (b.last_visit || '').localeCompare(a.last_visit || ''))
+    .slice(0, 5);
+
+  const statCards = [
+    { lbl:'Total Patients',  val:stats.total_patients     || 0, sub:'Registered',      color:'#4D7A68', bg:'#E8F4F0', bdr:'#B8D8CE', ico:'👥' },
+    { lbl:"Today's Appts",   val:stats.today_appointments || 0, sub:'Scheduled today', color:'#C08030', bg:'#FEF3DC', bdr:'#F0CF90', ico:'📅' },
+    { lbl:'This Week',       val:stats.week_appointments  || 0, sub:'Upcoming visits', color:'#3A5A9C', bg:'#ECF0F8', bdr:'#B0C0E0', ico:'📊' },
+    { lbl:'New This Month',  val:stats.new_this_month     || 0, sub:'March 2026',      color:'#6A3A9C', bg:'#F2EBF8', bdr:'#D0B8E8', ico:'✨' },
+  ].map(s => `
+    <div class="stat-card" style="background:${s.bg};border-color:${s.bdr};color:${s.color};">
+      <div class="stat-label">${s.ico} ${esc(s.lbl)}</div>
+      <div class="stat-value">${s.val}</div>
+      <div class="stat-sub">${esc(s.sub)}</div>
+    </div>`).join('');
+
+  const schedHtml = todayAppts.length === 0
+    ? `<div class="empty"><div class="empty-icon">🌿</div><div class="empty-text">No appointments today</div></div>`
+    : todayAppts.map(a => `
+      <div class="today-row">
+        <div class="time-badge">
+          <div class="time-val">${esc(a.time.split(' ')[0])}</div>
+          <div class="time-ampm">${esc(a.time.split(' ')[1])}</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:14px;">${esc(a.patient_name)}</div>
+          <div style="font-size:12px;color:var(--muted);">${esc(a.doctor)} · ${esc(a.appt_type)}</div>
+        </div>
+        <span class="bdg bdg-${a.status}">${esc(a.status)}</span>
+      </div>`).join('');
+
+  const recentHtml = recentPts.map((p, i) => `
+    <div class="today-row">
+      <div class="avatar" style="background:${avatarColor(i)};width:36px;height:36px;font-size:12px;">${initials(p.name)}</div>
+      <div style="flex:1;">
+        <div style="font-weight:800;font-size:14px;">${esc(p.name)}</div>
+        <div style="font-size:12px;color:var(--muted);">${esc(p.condition || '—')}</div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);white-space:nowrap;">${fmtDate(p.last_visit)}</div>
+    </div>`).join('');
+
+  return `
+    <div class="stats-grid">${statCards}</div>
+    <div class="dash-grid">
+      <div class="card">
+        <div class="flex-between" style="margin-bottom:14px;">
+          <div class="card-title" style="margin:0;">Today's Schedule</div>
+          <a class="link" onclick="navigate('appointments')">View all ›</a>
+        </div>${schedHtml}
+      </div>
+      <div class="card">
+        <div class="flex-between" style="margin-bottom:14px;">
+          <div class="card-title" style="margin:0;">Recent Patients</div>
+          <a class="link" onclick="navigate('patients')">View all ›</a>
+        </div>${recentHtml}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Quick Actions</div>
+      <div class="quick-actions">
+        <button class="btn btn-primary" onclick="openAddPatient()">+ Add Patient</button>
+        <button class="btn btn-secondary" onclick="navigate('appointments')">📅 New Appointment</button>
+        <button class="btn btn-amber" onclick="navigate('portal')">🌐 Patient Portal</button>
+      </div>
+    </div>`;
+}
+
+// ══ PATIENTS ══════════════════════════════════════════════
+function renderPatients(q = '') {
+  const list = q
+    ? patients.filter(p =>
+        p.name.toLowerCase().includes(q.toLowerCase()) ||
+        (p.condition || '').toLowerCase().includes(q.toLowerCase()) ||
+        (p.phone || '').includes(q) ||
+        (p.email || '').toLowerCase().includes(q.toLowerCase()))
+    : patients;
+
+  const rows = list.length === 0
+    ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">No patients match your search</div></div>`
+    : list.map((p, i) => `
+      <div class="patient-row">
+        <div class="avatar" style="background:${avatarColor(i)};width:46px;height:46px;font-size:15px;">${initials(p.name)}</div>
+        <div class="patient-info">
+          <div class="patient-name">${esc(p.name)}</div>
+          <div class="patient-meta">${age(p.dob)} yrs · ${esc(p.gender || '—')} · Blood: ${esc(p.blood_group || '—')} · ${esc(p.phone)}</div>
+          <div class="patient-tags">
+            <span class="tag tag-condition">${esc(p.condition || 'No condition listed')}</span>
+            ${p.allergies && p.allergies !== 'None'
+              ? `<span class="tag tag-allergy">⚠️ ${esc(p.allergies)}</span>` : ''}
+          </div>
+        </div>
+        <div class="patient-actions">
+          <div class="patient-last">Last visit<br/>${fmtDate(p.last_visit)}</div>
+          <div class="row-actions">
+            <button class="btn-icon" title="Edit" onclick="openEditPatient(${p.id})">✏️</button>
+            <button class="btn-icon" title="Delete" onclick="openDeletePatient(${p.id})" style="color:var(--danger-fg);">🗑</button>
+          </div>
+        </div>
+      </div>`).join('');
+
+  return `
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:18px;">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="form-input search-input" id="patient-search"
+          placeholder="Search by name, condition, phone or email…"
+          value="${esc(q)}" oninput="searchPatients(this.value)"/>
+      </div>
+      <div style="font-size:13px;color:var(--muted);font-weight:700;white-space:nowrap;">${list.length} record${list.length !== 1 ? 's' : ''}</div>
+    </div>
+    ${rows}`;
+}
+
+function searchPatients(q) {
+  const c = document.getElementById('content');
+  c.innerHTML = renderPatients(q);
+  const inp = document.getElementById('patient-search');
+  if (inp) { inp.focus(); inp.setSelectionRange(q.length, q.length); }
+}
+
+// ══ APPOINTMENTS ══════════════════════════════════════════
+function renderAppointments() {
+  const counts = {
+    all:       appointments.length,
+    today:     appointments.filter(a => a.date === TODAY).length,
+    upcoming:  appointments.filter(a => a.date > TODAY && a.status === 'scheduled').length,
+    completed: appointments.filter(a => a.status === 'completed').length,
+    cancelled: appointments.filter(a => a.status === 'cancelled').length,
+  };
+
+  const list = appointments.filter(a => {
+    if (apptFilter === 'today')     return a.date === TODAY;
+    if (apptFilter === 'upcoming')  return a.date > TODAY && a.status === 'scheduled';
+    if (apptFilter === 'completed') return a.status === 'completed';
+    if (apptFilter === 'cancelled') return a.status === 'cancelled';
+    return true;
+  }).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+
+  const tabs = [['all','All'],['today','Today'],['upcoming','Upcoming'],['completed','Completed'],['cancelled','Cancelled']]
+    .map(([k, l]) => `<button class="ftab${apptFilter === k ? ' active' : ''}" onclick="setApptFilter('${k}')">${l} <span style="opacity:.65;">(${counts[k]})</span></button>`)
+    .join('');
+
+  const cards = list.length === 0
+    ? `<div class="empty"><div class="empty-icon">🗓️</div><div class="empty-text">No appointments here</div></div>`
+    : list.map(a => `
+      <div class="appt-card">
+        <div class="appt-time">
+          <div class="appt-time-hm">${esc(a.time.split(' ')[0])}</div>
+          <div class="appt-time-ap">${esc(a.time.split(' ')[1])}</div>
+          <div class="appt-time-dt">${fmtDate(a.date).split(' ').slice(0, 2).join(' ')}</div>
+        </div>
+        <div class="appt-body">
+          <div class="appt-top">
+            <span class="appt-name">${esc(a.patient_name)}</span>
+            <span class="bdg bdg-${a.status}">${esc(a.status)}</span>
+          </div>
+          <div class="appt-doctor">${esc(a.doctor)} · ${esc(a.appt_type)}</div>
+          ${a.notes ? `<div class="appt-notes">${esc(a.notes)}</div>` : ''}
+        </div>
+        ${a.status === 'scheduled' ? `
+        <div class="appt-actions">
+          <button class="btn btn-primary btn-sm" onclick="setApptStatus(${a.id},'completed')">✓ Done</button>
+          <button class="btn btn-danger btn-sm" onclick="setApptStatus(${a.id},'cancelled')">✕ Cancel</button>
+        </div>` : ''}
+      </div>`).join('');
+
+  return `<div class="filter-tabs">${tabs}</div>${cards}`;
+}
+
+function setApptFilter(f) {
+  apptFilter = f;
+  document.getElementById('content').innerHTML = renderAppointments();
+}
+
+async function setApptStatus(id, status) {
+  try {
+    await api(`/appointments/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+    showToast(status === 'completed' ? 'Marked as completed' : 'Appointment cancelled');
+    await refreshData();
+    document.getElementById('content').innerHTML = renderAppointments();
+    document.getElementById('page-sub').textContent = 'Manage your clinic schedule';
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+// ══ PATIENT PORTAL ════════════════════════════════════════
+function renderPortalWrapper() {
+  return `<div class="portal-wrap">
+    <div class="portal-banner">
+      <div style="font-family:var(--serif);font-size:23px;font-weight:900;margin-bottom:6px;">Book an Appointment 🌿</div>
+      <div style="font-size:14px;opacity:.85;line-height:1.5;">Schedule your visit with our caring team in just a few steps.</div>
+    </div>
+    <div id="portal-body"></div>
+  </div>`;
+}
+
+function renderPortalStep() {
+  const body = document.getElementById('portal-body');
+  if (!body) return;
+
+  const stepLabels = ['Service', 'Date & Time', 'Your Details'];
+  const dots = stepLabels.map((lbl, i) => {
+    const s = i + 1;
+    const cls = s < portalStep ? 'done' : s === portalStep ? 'current' : 'future';
+    const icon = s < portalStep ? '✓' : s;
+    return `<div class="step-dot ${cls}">${icon}</div>${s < 3 ? `<div class="step-line${s < portalStep ? ' done' : ''}"></div>` : ''}`;
+  }).join('');
+
+  const header = `
+    <div class="steps-row">${dots}</div>
+    <div class="step-labels">
+      ${stepLabels.map((l, i) => `<span class="${i + 1 <= portalStep ? 'active-lbl' : ''}">${l}</span>`).join('')}
+    </div>`;
+
+  let body_html = '';
+
+  if (portalStep === 1) {
+    const services = [
+      { id:'General Checkup', name:'General Checkup', icon:'🩺', desc:'Routine health examination' },
+      { id:'Follow-up',       name:'Follow-up Visit',  icon:'📋', desc:'Continue ongoing treatment' },
+      { id:'Consultation',    name:'Consultation',     icon:'👨‍⚕️', desc:'Expert medical advice'     },
+      { id:'Lab Review',      name:'Lab Review',       icon:'🔬', desc:'Discuss test results'        },
+    ];
+    body_html = `
+      <div class="card-title">What brings you in today? 👋</div>
+      <div class="service-grid">
+        ${services.map(s => `
+          <div class="service-card${portalData.service === s.id ? ' selected' : ''}" onclick="portalSelectService('${s.id}')">
+            <div class="service-icon">${s.icon}</div>
+            <div class="service-name">${esc(s.name)}</div>
+            <div class="service-desc">${esc(s.desc)}</div>
+          </div>`).join('')}
+      </div>
+      <div style="text-align:right;">
+        <button class="btn btn-primary${!portalData.service ? ' disabled' : ''}" onclick="portalNext()">Next →</button>
+      </div>`;
+  }
+
+  else if (portalStep === 2) {
+    const slots = ['09:00 AM','09:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM','02:00 PM','02:30 PM','03:00 PM','03:30 PM','04:00 PM'];
+    body_html = `
+      <div class="card-title">Pick a date & time 📅</div>
+      <div class="form-group">
+        <label class="form-label">Preferred Date</label>
+        <input type="date" class="form-input" id="portal-date" min="${TODAY}" value="${portalData.date || ''}"
+          onchange="portalSetDate(this.value)" style="max-width:220px;"/>
+      </div>
+      ${portalData.date ? `
+        <div class="form-group">
+          <label class="form-label">Available Time Slots</label>
+          <div class="time-slots">
+            ${slots.map(t => `<button class="tslot${portalData.time === t ? ' selected' : ''}" onclick="portalSelectTime('${t}')">${t}</button>`).join('')}
+          </div>
+        </div>` : ''}
+      <div style="display:flex;justify-content:space-between;margin-top:10px;">
+        <button class="btn btn-secondary" onclick="portalBack()">← Back</button>
+        <button class="btn btn-primary${!portalData.date || !portalData.time ? ' disabled' : ''}" onclick="portalNext()">Next →</button>
+      </div>`;
+  }
+
+  else if (portalStep === 3) {
+    body_html = `
+      <div class="card-title">Almost done! Tell us about you 🙂</div>
+      <div class="form-grid">
+        <div class="form-group span-2">
+          <label class="form-label">Full Name *</label>
+          <input class="form-input" id="p3-name" placeholder="Your full name" value="${esc(portalData.name || '')}"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number *</label>
+          <input class="form-input" id="p3-phone" placeholder="+91 ..." value="${esc(portalData.phone || '')}"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email (optional)</label>
+          <input type="email" class="form-input" id="p3-email" placeholder="you@email.com" value="${esc(portalData.email || '')}"/>
+        </div>
+        <div class="form-group span-2">
+          <label class="form-label">Notes for the doctor</label>
+          <textarea class="form-input" id="p3-notes" placeholder="Symptoms, concerns, questions…">${esc(portalData.notes || '')}</textarea>
+        </div>
+      </div>
+      <div class="booking-summary">
+        <div style="font-weight:800;font-size:13px;margin-bottom:10px;">Booking Summary</div>
+        ${[['Service', portalData.service], ['Date', fmtDate(portalData.date)], ['Time', portalData.time], ['Assigned Doctor', 'Dr. Ayesha Khan']]
+          .map(([k, v]) => `<div class="summary-row"><span class="summary-key">${k}</span><span class="summary-val">${esc(v || '')}</span></div>`).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <button class="btn btn-secondary" onclick="portalBack()">← Back</button>
+        <button class="btn btn-amber" onclick="portalConfirm()">Confirm Booking 🎉</button>
+      </div>`;
+  }
+
+  else if (portalStep === 4) {
+    body.innerHTML = `<div class="card">
+      <div class="success-screen">
+        <div style="font-size:56px;margin-bottom:16px;">🎉</div>
+        <div style="font-family:var(--serif);font-size:26px;font-weight:900;margin-bottom:10px;">You're all booked!</div>
+        <div style="color:var(--muted);font-size:15px;line-height:1.6;">
+          Your <strong style="color:var(--ink);">${esc(portalData.service)}</strong> appointment on
+          <strong style="color:var(--ink);">${fmtDate(portalData.date)}</strong> at
+          <strong style="color:var(--ink);">${esc(portalData.time)}</strong> is confirmed.
+        </div>
+        <div style="font-size:13px;color:var(--muted);margin:8px 0 26px;">
+          We'll reach out to <strong>${esc(portalData.phone)}</strong> shortly.
+        </div>
+        <button class="btn btn-primary" onclick="portalReset()">Book Another Appointment</button>
+      </div>
+    </div>`;
+    return;
+  }
+
+  body.innerHTML = `<div class="card">${header}${body_html}</div>`;
+}
+
+function portalSelectService(id) { portalData.service = id; renderPortalStep(); }
+function portalSelectTime(t)     { portalData.time = t;    renderPortalStep(); }
+function portalSetDate(d)        { portalData.date = d; portalData.time = ''; renderPortalStep(); }
+function portalNext()            { portalStep++;  renderPortalStep(); }
+function portalBack()            { portalStep--;  renderPortalStep(); }
+function portalReset()           { portalStep = 1; portalData = {}; renderPortalStep(); }
+
+async function portalConfirm() {
+  const name  = document.getElementById('p3-name')?.value.trim();
+  const phone = document.getElementById('p3-phone')?.value.trim();
+  const email = document.getElementById('p3-notes')?.value.trim(); // fixed below
+  const notes = document.getElementById('p3-notes')?.value.trim();
+  if (!name || !phone) { showToast('Please enter your name and phone number', 'info'); return; }
+  portalData = { ...portalData, name, phone,
+    email: document.getElementById('p3-email')?.value.trim(),
+    notes };
+  try {
+    await api('/portal/book', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: portalData.name, phone: portalData.phone,
+        email: portalData.email, service: portalData.service,
+        date: portalData.date,  time: portalData.time,
+        notes: portalData.notes,
+      }),
+    });
+    portalStep = 4;
+    renderPortalStep();
+    showToast('Appointment booked successfully 🎉');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+// ══ PATIENT CRUD ══════════════════════════════════════════
+function openAddPatient() {
+  editingPatientId = null;
+  ['pt-name','pt-dob','pt-email','pt-phone','pt-condition','pt-allergies','pt-history']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('pt-gender').value = 'Female';
+  document.getElementById('pt-blood').value  = 'O+';
+  document.getElementById('pt-modal-title').textContent = '✨ New Patient';
+  document.getElementById('pt-save-lbl').textContent    = 'Add Patient';
+  openModal('patient-modal');
+}
+
+function openEditPatient(id) {
+  const p = patients.find(x => x.id === id);
+  if (!p) return;
+  editingPatientId = id;
+  document.getElementById('pt-name').value      = p.name        || '';
+  document.getElementById('pt-dob').value       = p.dob         || '';
+  document.getElementById('pt-gender').value    = p.gender      || 'Female';
+  document.getElementById('pt-phone').value     = p.phone       || '';
+  document.getElementById('pt-email').value     = p.email       || '';
+  document.getElementById('pt-blood').value     = p.blood_group || 'O+';
+  document.getElementById('pt-condition').value = p.condition   || '';
+  document.getElementById('pt-allergies').value = p.allergies   || '';
+  document.getElementById('pt-history').value   = p.history     || '';
+  document.getElementById('pt-modal-title').textContent = '✏️ Edit Patient';
+  document.getElementById('pt-save-lbl').textContent    = 'Update Patient';
+  openModal('patient-modal');
+}
+
+async function savePatient() {
+  const name  = document.getElementById('pt-name').value.trim();
+  const phone = document.getElementById('pt-phone').value.trim();
+  if (!name || !phone) { showToast('Name and phone are required', 'info'); return; }
+
+  const payload = {
+    name, phone,
+    dob:        document.getElementById('pt-dob').value        || null,
+    gender:     document.getElementById('pt-gender').value,
+    email:      document.getElementById('pt-email').value.trim()     || null,
+    blood_group:document.getElementById('pt-blood').value,
+    condition:  document.getElementById('pt-condition').value.trim() || null,
+    allergies:  document.getElementById('pt-allergies').value.trim() || 'None',
+    history:    document.getElementById('pt-history').value.trim()   || null,
+    last_visit: editingPatientId ? undefined : TODAY,
+  };
+
+  const btn = document.getElementById('pt-save-btn');
+  btn.classList.add('disabled');
+  try {
+    if (editingPatientId) {
+      await api(`/patients/${editingPatientId}`, { method: 'PUT', body: JSON.stringify(payload) });
+      showToast('Patient record updated');
+    } else {
+      await api('/patients', { method: 'POST', body: JSON.stringify(payload) });
+      showToast('New patient added');
+    }
+    closeModal('patient-modal');
+    await navigate(currentPage);
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.classList.remove('disabled');
+  }
+}
+
+function openDeletePatient(id) {
+  const p = patients.find(x => x.id === id);
+  if (!p) return;
+  deleteTargetId = id;
+  document.getElementById('del-name').textContent = p.name;
+  openModal('delete-modal');
+}
+
+async function confirmDelete() {
+  const btn = document.getElementById('del-confirm-btn');
+  btn.classList.add('disabled');
+  try {
+    await api(`/patients/${deleteTargetId}`, { method: 'DELETE' });
+    deleteTargetId = null;
+    closeModal('delete-modal');
+    showToast('Patient removed', 'info');
+    await navigate(currentPage);
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.classList.remove('disabled');
+  }
+}
+
+// ══ APPOINTMENT CRUD ══════════════════════════════════════
+function openAddAppt() {
+  const sel = document.getElementById('ap-patient');
+  sel.innerHTML = '<option value="">— Select Patient —</option>' +
+    patients.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  document.getElementById('ap-notes').value = '';
+  document.getElementById('ap-date').value  = '';
+  openModal('appt-modal');
+}
+
+async function saveAppointment() {
+  const patientId = parseInt(document.getElementById('ap-patient').value);
+  const date      = document.getElementById('ap-date').value;
+  const time      = document.getElementById('ap-time').value;
+  if (!patientId || !date || !time) { showToast('Please fill in all required fields', 'info'); return; }
+
+  const pt = patients.find(p => p.id === patientId);
+  const btn = document.getElementById('ap-save-btn');
+  btn.classList.add('disabled');
+  try {
+    await api('/appointments', {
+      method: 'POST',
+      body: JSON.stringify({
+        patient_id:   patientId,
+        patient_name: pt?.name || 'Unknown',
+        doctor:       document.getElementById('ap-doctor').value,
+        appt_type:    document.getElementById('ap-type').value,
+        date, time,
+        notes:  document.getElementById('ap-notes').value.trim() || null,
+        status: 'scheduled',
+      }),
+    });
+    closeModal('appt-modal');
+    showToast('Appointment scheduled');
+    await navigate(currentPage);
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.classList.remove('disabled');
+  }
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el =>
+  el.addEventListener('click', e => { if (e.target === el) el.classList.add('hidden'); })
+);
+
+// ══ INIT ══════════════════════════════════════════════════
+navigate('dashboard');
+</script>
+</body>
+</html>

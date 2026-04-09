@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MediCare — Live Queue</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fraunces:opsz,wght@9..144,700;9..144,900&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --cream:#FDF6EE;--white:#FFFFFF;
+    --sage:#6B9E8A;--sage-d:#4D7A68;--sage-l:#E8F4F0;
+    --amber:#E9A84C;--amber-d:#D4943A;--amber-l:#FEF3DC;
+    --ink:#2A1F18;--ink2:#3D2B1F;--muted:#9C8B7E;--border:#EDE4D8;
+    --danger:#B85248;--danger-bg:#FDECEA;
+    --blue:#3A6EA5;--blue-l:#EAF1FA;
+    --purple:#7B5EA7;--purple-l:#F0EBF8;
+    --font:"Nunito",sans-serif;--serif:"Fraunces",serif;
+    --radius:14px;--shadow:0 2px 12px rgba(61,43,31,.07);--shadow-lg:0 8px 32px rgba(61,43,31,.13);
+  }
+  body{font-family:var(--font);background:var(--cream);color:var(--ink2);min-height:100vh;font-size:14px;}
+
+  /* Topbar */
+  .topbar{background:var(--white);border-bottom:1.5px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+  .topbar-left{display:flex;align-items:center;gap:14px;}
+  .topbar-logo{font-family:var(--serif);font-size:20px;font-weight:900;color:var(--ink);}
+  .back-btn{background:none;border:1.5px solid var(--border);border-radius:9px;padding:6px 13px;font-family:var(--font);font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;transition:all .15s;}
+  .back-btn:hover{background:var(--sage-l);color:var(--sage-d);border-color:var(--sage);}
+  .live-badge{display:flex;align-items:center;gap:6px;background:#FEF2F2;border:1px solid #FECACA;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:800;color:#DC2626;}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:#DC2626;animation:pulse 1.4s ease infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
+  .refresh-info{font-size:11px;color:var(--muted);}
+
+  /* Layout */
+  .page{display:grid;grid-template-columns:340px 1fr;gap:20px;padding:24px 28px;max-width:1300px;margin:0 auto;}
+
+  /* Left panel - Now Serving + Queue */
+  .panel{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+  .panel-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .panel-title{font-family:var(--serif);font-size:16px;font-weight:900;color:var(--ink);}
+  .panel-body{padding:0;}
+
+  /* Now Serving card */
+  .now-serving{padding:20px;background:linear-gradient(135deg,#6B9E8A,#4D7A68);color:#fff;text-align:center;margin:16px;border-radius:12px;box-shadow:0 4px 16px rgba(77,122,104,.3);}
+  .now-number{font-size:56px;font-weight:900;font-family:var(--serif);line-height:1;}
+  .now-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.8;margin-bottom:4px;}
+  .now-name{font-size:18px;font-weight:800;margin-top:6px;}
+  .now-doctor{font-size:12px;opacity:.75;margin-top:3px;}
+  .now-empty{padding:28px 20px;text-align:center;color:var(--muted);font-size:13px;}
+
+  /* Call Next button */
+  .call-next-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 32px);margin:0 16px 16px;padding:13px;border:none;border-radius:11px;background:var(--sage);color:#fff;font-family:var(--font);font-size:14px;font-weight:800;cursor:pointer;transition:all .15s;}
+  .call-next-btn:hover{background:var(--sage-d);transform:translateY(-1px);box-shadow:0 4px 14px rgba(77,122,104,.35);}
+  .call-next-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+  /* Queue list */
+  .queue-list{display:flex;flex-direction:column;}
+  .queue-item{display:flex;align-items:center;gap:12px;padding:13px 20px;border-bottom:1px solid var(--border);transition:background .12s;position:relative;}
+  .queue-item:last-child{border-bottom:none;}
+  .queue-item:hover{background:rgba(107,158,138,.04);}
+  .q-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;}
+  .q-num.waiting{background:var(--blue-l);color:var(--blue);}
+  .q-num.in_consultation{background:var(--sage-l);color:var(--sage-d);}
+  .q-num.done{background:#F3EDE7;color:var(--muted);}
+  .q-num.not_checked_in{background:var(--amber-l);color:var(--amber-d);}
+  .q-info{flex:1;min-width:0;}
+  .q-name{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .q-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+  .q-badge{padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:800;white-space:nowrap;}
+  .q-badge.waiting{background:var(--blue-l);color:var(--blue);}
+  .q-badge.in_consultation{background:var(--sage-l);color:var(--sage-d);}
+  .q-badge.done{background:#F3EDE7;color:var(--muted);}
+  .q-badge.not_checked_in{background:var(--amber-l);color:var(--amber-d);}
+  .q-badge.skipped{background:var(--danger-bg);color:var(--danger);}
+  .q-actions{display:flex;gap:4px;}
+  .q-btn{background:none;border:1px solid var(--border);border-radius:7px;padding:4px 9px;font-family:var(--font);font-size:11px;font-weight:800;color:var(--muted);cursor:pointer;transition:all .12s;white-space:nowrap;}
+  .q-btn:hover{background:var(--sage-l);color:var(--sage-d);border-color:var(--sage);}
+  .q-btn.danger:hover{background:var(--danger-bg);color:var(--danger);border-color:var(--danger);}
+
+  /* Right panel - Today appointments + Stats */
+  .right-col{display:flex;flex-direction:column;gap:20px;}
+
+  /* Stats row */
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .stat-mini{background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);text-align:center;}
+  .stat-mini-val{font-family:var(--serif);font-size:28px;font-weight:900;color:var(--ink);line-height:1;}
+  .stat-mini-label{font-size:11px;color:var(--muted);margin-top:4px;font-weight:700;}
+
+  /* Appointment table */
+  .table-wrap{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+  .table-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .table-title{font-family:var(--serif);font-size:16px;font-weight:900;color:var(--ink);}
+  table{width:100%;border-collapse:collapse;}
+  th{padding:11px 16px;text-align:left;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--cream);border-bottom:1px solid var(--border);}
+  td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(107,158,138,.03);}
+  .checkin-btn{background:var(--sage);color:#fff;border:none;border-radius:8px;padding:6px 13px;font-family:var(--font);font-size:12px;font-weight:800;cursor:pointer;transition:all .15s;}
+  .checkin-btn:hover{background:var(--sage-d);}
+  .checkin-btn:disabled{background:var(--muted);cursor:not-allowed;}
+
+  /* Time indicator */
+  .time-block{display:inline-flex;align-items:center;gap:5px;background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;}
+
+  /* Empty */
+  .empty{text-align:center;padding:32px;color:var(--muted);font-size:13px;}
+
+  /* Spinner */
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* Toast */
+  #toast{position:fixed;bottom:24px;right:24px;padding:11px 18px;border-radius:11px;font-size:13px;font-weight:700;box-shadow:var(--shadow-lg);opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;z-index:999;}
+  #toast.show{opacity:1;transform:none;}
+  #toast.s{background:var(--sage-d);color:#fff;}
+  #toast.e{background:var(--danger);color:#fff;}
+
+  @media(max-width:900px){.page{grid-template-columns:1fr;}.stats-row{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="back-btn" onclick="window.location.href='index.html'">← Dashboard</button>
+    <div class="topbar-logo">🏥 Live Queue</div>
+    <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="refresh-info">Auto-refreshes every <strong>10s</strong> &nbsp;|&nbsp; Last update: <span id="lastUpdate">—</span></div>
+    <button class="back-btn" onclick="loadQueue()" style="border-color:var(--sage);color:var(--sage-d)">↻ Refresh Now</button>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- Left: Now Serving + Queue -->
+  <div>
+    <!-- Now Serving -->
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-head">
+        <div class="panel-title">Now Serving</div>
+        <div id="queueCount" style="font-size:12px;color:var(--muted);">Loading…</div>
+      </div>
+      <div id="nowServing"><div class="now-empty">Loading queue…</div></div>
+      <button class="call-next-btn" id="callNextBtn" onclick="callNext()">
+        📢 Call Next Patient
+      </button>
+    </div>
+
+    <!-- Waiting List -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Waiting List</div>
+        <span id="waitingCount" style="background:var(--blue-l);color:var(--blue);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:800;">0 waiting</span>
+      </div>
+      <div class="queue-list" id="queueList">
+        <div class="empty">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Stats + Today appointments -->
+  <div class="right-col">
+    <div class="stats-row" id="statsRow">
+      <div class="stat-mini"><div class="stat-mini-val" id="s-total">—</div><div class="stat-mini-label">Total Today</div></div>
+      <div class="stat-mini"><div class="stat-mini-val" id="s-waiting" style="color:var(--blue)">—</div><div class="stat-mini-label">Waiting</div></div>
+      <div class="stat-mini"><div class="stat-mini-val" id="s-seen" style="color:var(--sage-d)">—</div><div class="stat-mini-label">Seen Today</div></div>
+      <div class="stat-mini"><div class="stat-mini-val" id="s-pending" style="color:var(--amber-d)">—</div><div class="stat-mini-label">Not Checked In</div></div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-head">
+        <div class="table-title">Today's Appointments</div>
+        <div style="font-size:12px;color:var(--muted)" id="todayDate"></div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Patient</th>
+            <th>Scheduled</th>
+            <th>Doctor</th>
+            <th>Type</th>
+            <th>Queue</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="apptTableBody"><tr><td colspan="7"><div class="empty">Loading…</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const API = 'http://localhost:8000';
+  if (sessionStorage.getItem('mc_role') !== 'admin') window.location.href = 'login.html';
+
+  let queueData = [];
+
+  // Date display
+  const d = new Date();
+  document.getElementById('todayDate').textContent = d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  function toast(msg, type='s') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'show ' + type;
+    setTimeout(() => t.className = '', 3000);
+  }
+
+  function statusLabel(s) {
+    const map = { not_checked_in:'Not Checked In', waiting:'Waiting', in_consultation:'In Consultation', done:'Done', skipped:'Skipped' };
+    return map[s] || s;
+  }
+
+  async function loadQueue() {
+    try {
+      queueData = await fetch(API + '/queue/today').then(r => r.json());
+      renderQueue();
+      document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('en-IN');
+    } catch(e) {
+      document.getElementById('queueList').innerHTML = '<div class="empty" style="color:var(--danger)">⚠️ Cannot connect to server.</div>';
+    }
+  }
+
+  function renderQueue() {
+    const all        = queueData;
+    const inConsult  = all.find(a => a.queue_status === 'in_consultation');
+    const waiting    = all.filter(a => a.queue_status === 'waiting');
+    const done       = all.filter(a => a.queue_status === 'done');
+    const notIn      = all.filter(a => a.queue_status === 'not_checked_in');
+
+    // Stats
+    document.getElementById('s-total').textContent   = all.length;
+    document.getElementById('s-waiting').textContent  = waiting.length;
+    document.getElementById('s-seen').textContent     = done.length;
+    document.getElementById('s-pending').textContent  = notIn.length;
+    document.getElementById('queueCount').textContent = waiting.length + ' in queue';
+    document.getElementById('waitingCount').textContent = waiting.length + ' waiting';
+
+    // Now Serving
+    const ns = document.getElementById('nowServing');
+    if (inConsult) {
+      ns.innerHTML = `
+        <div class="now-serving">
+          <div class="now-label">Now Being Seen</div>
+          <div class="now-number">${inConsult.queue_number || '—'}</div>
+          <div class="now-name">${inConsult.patient_name}</div>
+          <div class="now-doctor">${inConsult.doctor}</div>
+          <div style="margin-top:10px;font-size:12px;opacity:.7">Called at ${inConsult.called_at ? inConsult.called_at.split(' ')[1].slice(0,5) : '—'}</div>
+        </div>`;
+    } else {
+      ns.innerHTML = '<div class="now-empty">👆 No one in consultation.<br/>Press "Call Next Patient" to begin.</div>';
+    }
+
+    // Waiting list (only waiting + in_consultation)
+    const queueItems = [...(inConsult ? [inConsult] : []), ...waiting];
+    const ql = document.getElementById('queueList');
+    if (!queueItems.length) {
+      ql.innerHTML = '<div class="empty">No patients waiting right now.</div>';
+    } else {
+      ql.innerHTML = queueItems.map(a => {
+        const isCurrent = a.queue_status === 'in_consultation';
+        return `
+        <div class="queue-item" style="${isCurrent ? 'background:var(--sage-l);' : ''}">
+          <div class="q-num ${a.queue_status}">${a.queue_number || '?'}</div>
+          <div class="q-info">
+            <div class="q-name">${a.patient_name}</div>
+            <div class="q-meta">${a.doctor} · ${a.scheduled_time}${a.eta_mins != null ? ' · ETA ~' + a.eta_mins + 'm' : ''}</div>
+          </div>
+          <div class="q-actions">
+            <span class="q-badge ${a.queue_status}">${statusLabel(a.queue_status)}</span>
+            ${!isCurrent ? `<button class="q-btn danger" onclick="skipPatient(${a.id})">Skip</button>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // Appointment table
+    const tbody = document.getElementById('apptTableBody');
+    if (!all.length) {
+      tbody.innerHTML = '<tr><td colspan="7"><div class="empty">No appointments today.</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = all.map((a, i) => `
+      <tr style="${a.queue_status === 'in_consultation' ? 'background:var(--sage-l);' : a.queue_status === 'done' ? 'opacity:.6;' : ''}">
+        <td style="font-weight:900;color:var(--muted)">${a.queue_number || '—'}</td>
+        <td style="font-weight:800">${a.patient_name}</td>
+        <td><div class="time-block">🕐 ${a.scheduled_time}</div></td>
+        <td style="color:var(--muted);font-size:12px">${a.doctor}</td>
+        <td>${a.appt_type}</td>
+        <td><span class="q-badge ${a.queue_status}">${statusLabel(a.queue_status)}</span>
+          ${a.queue_position ? '<span style="font-size:11px;color:var(--muted);margin-left:5px">#' + a.queue_position + ' in line</span>' : ''}
+        </td>
+        <td>
+          ${a.queue_status === 'not_checked_in'
+            ? `<button class="checkin-btn" onclick="checkIn(${a.id})">Check In</button>`
+            : a.queue_status === 'done'
+              ? '<span style="color:var(--sage-d);font-weight:800;font-size:12px">✓ Done</span>'
+              : a.queue_status === 'in_consultation'
+                ? '<span style="color:var(--sage-d);font-weight:800;font-size:12px">● In Room</span>'
+                : '<span style="color:var(--blue);font-weight:800;font-size:12px">⏳ Waiting</span>'
+          }
+        </td>
+      </tr>`).join('');
+  }
+
+  async function checkIn(apptId) {
+    try {
+      const res = await fetch(API + '/queue/checkin/' + apptId, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) { toast(data.detail || 'Check-in failed', 'e'); return; }
+      toast('Patient checked in — Queue #' + data.queue_number);
+      loadQueue();
+    } catch(e) { toast('Error connecting to server', 'e'); }
+  }
+
+  async function callNext() {
+    const btn = document.getElementById('callNextBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Calling…';
+    try {
+      const res = await fetch(API + '/queue/call-next', { method: 'POST' });
+      const data = await res.json();
+      if (data.called) {
+        toast('📢 Calling: ' + data.called + ' (Queue #' + data.queue_number + ')');
+      } else {
+        toast('No more patients in queue', 'e');
+      }
+      loadQueue();
+    } catch(e) { toast('Error', 'e'); }
+    finally { btn.disabled = false; btn.innerHTML = '📢 Call Next Patient'; }
+  }
+
+  async function skipPatient(apptId) {
+    try {
+      await fetch(API + '/queue/' + apptId + '/status', {
+        method: 'PATCH', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ status: 'skipped' })
+      });
+      toast('Patient skipped.');
+      loadQueue();
+    } catch(e) { toast('Error', 'e'); }
+  }
+
+  // Auto-refresh every 10 seconds
+  loadQueue();
+  setInterval(loadQueue, 10000);
+</script>
+</body>
+</html>
